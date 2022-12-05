@@ -6,141 +6,152 @@ import pandas as pd
 import re
 
 #global variables
-keyWords = []
 urlPrefix = "https://www.google.com/search?q="
-relatedKeys = []   
-allData = []
-compLinks = []
-keyPo = 0
 headers = {  'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0'} 
-def main():
-    global relatedKeys, compLinks,keyPo
-    # read keywords
-    k = open("keyWords.txt",'r',encoding="utf-8")
+
+def list_urls():
+    KFile = open("keyWords.txt",'r',encoding="utf-8")
+    Urls = []
+    for keyword in KFile:
+        KeyParts = keyword.removesuffix("\n").split(" ")
+        FinalKeyword = ""
+        for Part in KeyParts:
+            FinalKeyword = FinalKeyword + "+" + Part
+        FinalKeyword = FinalKeyword.removeprefix("+")
+        FinalUrl = urlPrefix + FinalKeyword
+        Urls.append(FinalUrl)
+    return Urls
+
+
+def read_url(url):
+    global headers
+    Soup = []
+    try:
+        Web = requests.get(url, headers=headers).text
+        Soup = BeautifulSoup(Web,"html.parser")
+    except:
+        print("error")
+    return Soup
+
+
+def find_similar_keywords(target):
+    iter = 0
+    RelatedKeys = []
+    for elem in target:
+        if elem.text == "Related searches":
+            Position = iter
+        iter += 1
+    for i in range(Position,len(target)):
+        CurrentTag = target[i]
+        CheckIn = "dir" in str(CurrentTag)
+        if CheckIn == True:
+            CurrentKey = CurrentTag.text
+            RelatedKeys.append(CurrentKey)
+    RelatedKeys = set(RelatedKeys)
+    RelatedKeywords = ''
+    for key in RelatedKeys:
+        RelatedKeywords = RelatedKeywords + "," +  key
+    return RelatedKeywords
+
+def write_to_file(data):
     w = open("data.txt",'w',encoding="utf-8")
-    for x in k:
-        keyWords.append(x)
-    # build url from keyword
-    for i in keyWords:
-        i2 = i.removesuffix("\n").split(" ")
-        i3 = ""
-        for j in i2:
-            i3 = i3 + "+" + j
-        i3 = i3.removeprefix("+")
-        curUrl = urlPrefix + i3
-        # print(curUrl)
-        # parse url
-        try:
-            web = requests.get(curUrl, headers=headers).text
-            soup = BeautifulSoup(web,"html.parser")
-            # with open('codes.html','w', encoding="utf-8") as file:
-            #     file.write(soup.prettify())
-            target = soup.find_all('span')
-            links = soup.find_all('a')
-        except:
-            print("error")
-        purpose = "positionC"
-        # Find related keywords ------------------------------------------
-        if purpose == "keywords":
-            n = 0
-            for elem in target:
-                if elem.text == "Related searches":
-                    position = n
-                n = n+1
-            for m in range(position,len(target)):
-                curTag = target[m]
-                ch = "dir" in str(curTag)
-                if ch == True:
-                    curKey = curTag.text
-                    relatedKeys.append(curKey)
-                    # print(curKey)
-            relatedKeys = set(relatedKeys)
-            value = i.removesuffix("\n") + ":"
-            for m1 in relatedKeys:
-                value = value + "," +  m1
-            w.write(value + "\r")
-            relatedKeys = []
-        # Find competitors ------------------------------------------
-        elif purpose == "competitors":
-            n = 0
-            for elem in links:
-                ch = "/url?q=" in str(elem)
-                ch1 = "</span></span></a>" in str(elem)
-                ch2 = "google.com" in str(elem)
-                if ch == True and ch1==False and ch2==False:
-                    e = re.findall(r"\bhttp.*?\b\/",str(elem))
-                    if len(e)>0:
-                        e = e[0]
-                        e = e.removeprefix('http://').removeprefix('https://')
-                        e = e.removeprefix('www.').removesuffix("/")
-                        compLinks.append(e)
-                    # print(elem)
-            value = i.removesuffix("\n")
-            for m1 in compLinks:
-                value = value + "," +  m1
-            w.write(value + "\r")
-            compLinks = []
-         # Find position (first page) of keywords ------------------------------------------
-        elif purpose == "position":
-            webSite = "top-packs.com"
-            n = 0
-            for elem in links:
-                ch = "/url?esrc" in str(elem)
-                ch1 = webSite in str(elem)
-                ch2 = "</span></span></a>" in str(elem)
-                if ch == True and ch2 == False:
-                    n = n+1
-                    if ch1 == True:
-                        keyPo = n
-                        break
-            w.write(str(keyPo) + "\r")
-            keyPo = 0
+    for d in data:
+        w.write(str(d) + "\r")
+
+def find_competitors(links):
+    CompetitorsLinks = ''
+    for elem in links:
+        CheckIn = "/url?esrc=s" in str(elem)
+        CheckIn1 = "</span></span></a>" in str(elem)
+        CheckIn2 = "google.com" in str(elem)
+        if CheckIn == True and CheckIn2 == False:
+            Links = re.findall(r"\bhttp.*?\b\/",str(elem))
+            if len(Links)>0:
+                Links = Links[0]
+                Links = Links.removeprefix('http://').removeprefix('https://')
+                Links = Links.removeprefix('www.').removesuffix("/")
+                CompetitorsLinks = CompetitorsLinks + ',' + str(Links)
+    return CompetitorsLinks
+
+def find_position(links,WebSite):
+    itet = 0
+    Position = 0
+    for elem in links:
+        CheckIn = "/url?esrc" in str(elem)
+        CheckIn1 = WebSite in str(elem)
+        CheckIn2 = "</span></span></a>" in str(elem)
+        if CheckIn == True and CheckIn2 == False:
+            itet = itet+1
+            if CheckIn1 == True:
+                Position = itet
+    return Position      
+
+def main():
+    global  compLinks,keyPo,AllRelatedKeywords
+    Urls = list_urls()  # Read keywords from a file and creates urls
+    purpose = "competitors"
+    # Find related keywords ------------------------------------------
+    if purpose == "keywords":
+        AllRelatedKeywords = []
+        for CurrentUrl in Urls:
+            Soup = read_url(CurrentUrl) # Reads a url using beautifulsoap
+            target = Soup.find_all('span')
+            RelatedKeywords = find_similar_keywords(target) # Finds related keywords
+            value = CurrentUrl + ":" + RelatedKeywords
+            AllRelatedKeywords.append(value)
+        write_to_file(AllRelatedKeywords)  # Write data in a file
+    # Find competitors ------------------------------------------
+    elif purpose == "competitors":
+        AllCompetitors = [] 
+        for CurrentUrl in Urls:
+            Soup = read_url(CurrentUrl) # Reads a url using beautifulsoap
+            links = Soup.find_all('a')
+            CompetitorsLinks = find_competitors(links)
+            value = CurrentUrl + ":" + CompetitorsLinks
+            AllCompetitors.append(value)
+        write_to_file(AllCompetitors)
+    # Find position (first page) of keywords ------------------------------------------
+    elif purpose == "position":
+        WebSite = "top-packs.com"
+        AllPositions = []
+        for CurrentUrl in Urls:
+            Soup = read_url(CurrentUrl) # Reads a url using beautifulsoap
+            links = Soup.find_all('a')
+            Position = find_position(links,WebSite)
+            AllPositions.append(Position)
+        write_to_file(AllPositions)
         # Find position (10-100) of keywords ------------------------------------------
-        elif purpose == "positionC":
-            webSite = "top-packs.com"
-            n1 = 0
+    elif purpose == "positionC":
+        WebSite = "top-packs.com"
+        AllPositions = []
+        for CurrentUrl in Urls:
+            CheckPosition = 0
             for l in range(4,7):
-                if n1 == 0:
-                    n = 0
-                    curUrl1 = curUrl + "&start="+ str(l*10)
-                    web1 = requests.get(curUrl1).text
-                    soup1 = BeautifulSoup(web1,"html.parser")
+                if CheckPosition == 0:
+                    curUrl1 = CurrentUrl + "&start="+ str(l*10)
+                    soup1 = read_url(curUrl1)
                     links1 = soup1.find_all('a')
-                    for elem in links1:
-                        ch = "/url?q=" in str(elem)
-                        ch1 = webSite in str(elem)
-                        ch2 = "</span></span></a>" in str(elem)
-                        if ch == True and ch2 == False:
-                            n = n+1
-                            if ch1 == True:
-                                keyPo = n + l*10
-                                n1 = 1
-                                break
-            w.write(str(keyPo) + "\r")
-            keyPo = 0
+                    Position = find_position(links1,WebSite)
+                    if Position > 0:
+                        CheckPosition = 1
+            AllPositions.append(Position)
+        write_to_file(AllPositions)
 
         # compare two competitors ------------------------------------------
-        elif purpose == "compare":
-            comp1 = "top-packs.com"
-            comp2 = "sigolpack.com"
-            n = 0
-            n1 = 0
-            n2 = 0
-            for elem in links:
-                ch = "/url?q=" in str(elem)
-                ch1 = comp1 in str(elem)
-                ch2 = comp2 in str(elem)
-                ch3 = "</span></span></a>" in str(elem)
-                if ch == True and ch3 == False:
-                    n = n+1
-                    if ch1 == True:
-                        n1 = n
-                    elif ch2 == True:
-                        n2 = n
-                if n1!=0 and n2!=0:
-                    break
-            value = "The position of " + comp1 + " is :" +str(n1) + " and the position of " + comp2 + " is :" +str(n2)      
-            w.write(value + "\r")
+    elif purpose == "compare":
+        Competitor1 = "top-packs.com"
+        Competitor2 = "sigolpack.com"
+        Position1 = 0
+        Position2 = 0
+        AllCompetitorData = []
+        for CurrentUrl in Urls:
+            Soup = read_url(CurrentUrl) # Reads a url using beautifulsoap
+            links = Soup.find_all('a')
+            Position1 = find_position(links,Competitor1)
+            Position2 = find_position(links,Competitor2)
+            value = "The position of " + Competitor1 + " is :" +str(Position1) + " and the position of " + Competitor2 + " is :" +str(Position2)  
+            AllCompetitorData.append(value)    
+        write_to_file(AllCompetitorData)
         
 
 
