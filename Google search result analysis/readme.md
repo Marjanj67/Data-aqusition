@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="https://github.com/Marjanj67/Data-aqusition/blob/e5419af5aaba1832185ca23a72d301c2c7c95d7f/Google%20search%20result%20analysis/google-image.jpg" width = 80% />
+</p>
 # Getting data from google search engine
 ## Purpose of the data
 this data is for marketing purposes and includes several parts:
