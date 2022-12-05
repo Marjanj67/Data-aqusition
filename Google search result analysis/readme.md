@@ -92,7 +92,7 @@ def main():
         write_to_file(AllCompetitorData)
 ```
 ### List url function
-This function is used to create urls from list of keywords.
+This function is used to create urls from list of keywords and returns a list of urls.
 
 ```
 def list_urls():
@@ -108,7 +108,8 @@ def list_urls():
         Urls.append(FinalUrl)
     return Urls
 ```
-
+### Read url Function
+This function reads content of a url using BeautifulSoup and returns the soup object.
 ```
 
 def read_url(url):
@@ -120,7 +121,10 @@ def read_url(url):
     except:
         print("error")
     return Soup
-
+```
+### Find similar keywords function
+This function creates a string made of related keywords for each keyword and returns that string.
+```
 
 def find_similar_keywords(target):
     iter = 0
@@ -140,12 +144,12 @@ def find_similar_keywords(target):
     for key in RelatedKeys:
         RelatedKeywords = RelatedKeywords + "," +  key
     return RelatedKeywords
+```
 
-def write_to_file(data):
-    w = open("data.txt",'w',encoding="utf-8")
-    for d in data:
-        w.write(str(d) + "\r")
 
+### Find competitors function
+This function creates a list of competitors for a certain keyword  and returns them as a combined string.
+```
 def find_competitors(links):
     CompetitorsLinks = ''
     for elem in links:
@@ -160,7 +164,10 @@ def find_competitors(links):
                 Links = Links.removeprefix('www.').removesuffix("/")
                 CompetitorsLinks = CompetitorsLinks + ',' + str(Links)
     return CompetitorsLinks
-
+```
+### Find position function
+This function finds position of a domain in search result for a specific keyword.
+```
 def find_position(links,WebSite):
     itet = 0
     Position = 0
@@ -179,6 +186,13 @@ def find_position(links,WebSite):
 
  
 ```
-
+### Write to file function
+This function writes data to a file
+```
+def write_to_file(data):
+    w = open("data.txt",'w',encoding="utf-8")
+    for d in data:
+        w.write(str(d) + "\r")
+```
 ## Output and results
-
+The result is a text file name data that contains different data based on the chosen purpose.
