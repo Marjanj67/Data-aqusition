@@ -102,6 +102,7 @@ def get_details(Soup):
             seniority = k.text.split('\n')[1].strip(' ')
     
     uls = Soup.find_all('ul')
+    benefits = []
     for u in uls:
         if 'benefit' in str(u):
             benefits = u
@@ -116,8 +117,7 @@ def main():
     JobUrls = get_urls(BaseUrls)
     iter = 0
     header = 'url'+ '-,' + 'title' +'-,' + 'company' +'-,' + 'location'+'-,' + 'Number of applicants' +'-,' + 'workplace type' +'-,' + 'posted date' +'-,' + 'seniority' +'-,' + 'benefits' + '-,' + 'description'
-
-    Data[iter] = header
+    Data.append(header)
     for j in JobUrls:
         webUrl = requests.get(j).text
         Soup = BeautifulSoup(webUrl,'html.parser')
@@ -129,8 +129,8 @@ def main():
         description = get_description(Soup)
         
         j = j.split('?')[0]
-        Data[iter] = str(j)+ '-,' + str(title) +'-,' + str(company) +'-,' + str(details['location'])+'-,' + str(details['Number of applicants']) +'-,' + str(details['workplace type']) +'-,' + str(details['posted date']) +'-,' + str(details['seniority']) +'-,' + str(details['benefits']) + str(description)
-        iter += 1
+        CurrentData = str(j)+ '-,' + str(title) +'-,' + str(company) +'-,' + str(details['location'])+'-,' + str(details['Number of applicants']) +'-,' + str(details['workplace type']) +'-,' + str(details['posted date']) +'-,' + str(details['seniority']) +'-,' + str(details['benefits']) + str(description)
+        Data.append(CurrentData)
     write_to_file(Data)
 
 
