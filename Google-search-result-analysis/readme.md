@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/Marjanj67/Data-aqusition/blob/e5419af5aaba1832185ca23a72d301c2c7c95d7f/Google%20search%20result%20analysis/google-image.jpg" width = 80% />
+  <img src="https://github.com/Marjanj67/Data-aqusition/blob/3e914e4870112d0aec47b2a36a4013e5ad19b1b0/Google-search-result-analysis/google-image.jpg" width = 80% />
 </p>
 # Getting data from google search engine
 ## Purpose of the data
