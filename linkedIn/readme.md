@@ -1,12 +1,46 @@
 # scraping linkedIn data (job posts) using python
 ## The code
+
+
+### Importing the libraries
 ```
 from bs4 import BeautifulSoup
 import requests
 import re
+```
 
 
+### The main function
 
+```
+def main():
+    Data = []
+    BaseUrls = get_base_urls()
+    JobUrls = get_urls(BaseUrls)
+    iter = 0
+    header = 'url'+ '-,' + 'title' +'-,' + 'company' +'-,' + 'location'+'-,' + 'Number of applicants' +'-,' + 'workplace type' +'-,' + 'posted date' +'-,' + 'seniority' +'-,' + 'benefits' + '-,' + 'description'
+    Data.append(header)
+    for j in JobUrls:
+        webUrl = requests.get(j).text
+        Soup = BeautifulSoup(webUrl,'html.parser')
+        # s=open('html.html','w')
+        # s.write(str(Soup.prettify("utf-8")))
+        title = find_title(Soup)
+        company = find_company(Soup)
+        details = get_details(Soup)
+        description = get_description(Soup)
+        
+        j = j.split('?')[0]
+        CurrentData = str(j)+ '-,' + str(title) +'-,' + str(company) +'-,' + str(details['location'])+'-,' + str(details['Number of applicants']) +'-,' + str(details['workplace type']) +'-,' + str(details['posted date']) +'-,' + str(details['seniority']) +'-,' + str(details['benefits']) + str(description)
+        Data.append(CurrentData)
+    write_to_file(Data)
+
+
+```
+
+
+### Functions for finding the urls
+```
 def get_base_urls():
     city = 'toronto'
     cityGeo = {'toronto':'100025096','markham':'102280801'}
@@ -21,8 +55,6 @@ def get_base_urls():
 
     return BaseUrls
 
-
-
 def get_urls(BaseUrls):
     JobUrls= []
     for bu in BaseUrls:    
@@ -34,7 +66,9 @@ def get_urls(BaseUrls):
             UrlTemp = [x for x in Splitlink if x.startswith('https')][0]
             JobUrls.append(UrlTemp)
     return JobUrls
-
+```
+### Functions for finding the details (title, compant, location , ... )
+```
 def find_title(Soup):
     title = Soup.find('h1').text
     return title
@@ -71,18 +105,6 @@ def get_description(Soup):
     description = tempDes
     return description
 
- 
-
-
-
-
-
-def write_to_file(Data):
-    w = open('allData.txt','w', encoding="utf-8")
-    for d in Data:
-        w.write(d +"\r")
-
-
 def get_details(Soup):
     AllSpans = Soup.find_all('span')
     Location= []
@@ -112,34 +134,12 @@ def get_details(Soup):
     benefits = str(benefits).removeprefix('<ul><li>').removesuffix('</li></ul>').replace('</li><li>','- ')
     details={'location':Location,'Number of applicants': NumApp,'workplace type':Wtype,'posted date':postedTime,'seniority':seniority,'benefits':benefits}
     return details
-
-
-def main():
-    Data = []
-    BaseUrls = get_base_urls()
-    JobUrls = get_urls(BaseUrls)
-    iter = 0
-    header = 'url'+ '-,' + 'title' +'-,' + 'company' +'-,' + 'location'+'-,' + 'Number of applicants' +'-,' + 'workplace type' +'-,' + 'posted date' +'-,' + 'seniority' +'-,' + 'benefits' + '-,' + 'description'
-    Data.append(header)
-    for j in JobUrls:
-        webUrl = requests.get(j).text
-        Soup = BeautifulSoup(webUrl,'html.parser')
-        # s=open('html.html','w')
-        # s.write(str(Soup.prettify("utf-8")))
-        title = find_title(Soup)
-        company = find_company(Soup)
-        details = get_details(Soup)
-        description = get_description(Soup)
+```
+### Function for writing to file 
+```
+def write_to_file(Data):
+    w = open('allData.txt','w', encoding="utf-8")
+    for d in Data:
+        w.write(d +"\r")
         
-        j = j.split('?')[0]
-        CurrentData = str(j)+ '-,' + str(title) +'-,' + str(company) +'-,' + str(details['location'])+'-,' + str(details['Number of applicants']) +'-,' + str(details['workplace type']) +'-,' + str(details['posted date']) +'-,' + str(details['seniority']) +'-,' + str(details['benefits']) + str(description)
-        Data.append(CurrentData)
-    write_to_file(Data)
-
-
-if __name__ == "__main__":
-  main();
-
-
-
 ```
