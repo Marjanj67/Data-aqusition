@@ -1,17 +1,23 @@
 # Scraping data from rahnama.com
 ## The purpose of the data
-
+rahnama.com is a website that contains different types of advertisements. In this code we look for certain ads and extract name and phone number from them. 
 ## Process of acquiring the data
-
+1. Getting ad urls from base urls
+In this part we also load old urls that have been processed and compare them with new ones to avoid repetitive data.
+2. Scraping ad pages for details
+3. Gathering details
+4. Writing data in a file
 
 ## The code
+### Importing libraries
 ```
-
 import re
 import requests
 from bs4 import BeautifulSoup
+```
 
-
+### Functions for finding urls
+```
 def find_links(next):
   slinks =re.findall(r'[:][\d]{6}',str(next))
   Urls = []
@@ -20,7 +26,6 @@ def find_links(next):
     m = "https://rahnama.com" + str(m)
     Urls.append(m)
   return Urls
-
 
 def find_urls(oldUrls):
     u = open ("BaseUrls.txt", "r")
@@ -48,7 +53,10 @@ def read_old_urls():
       oldUrls.append(i)
   return oldUrls
 
+```
 
+### Function for writing the data
+```
 def write_to_file(UrlList,FileName):
   Path = str(FileName)+'.txt'
   f=open(str(Path),"w+")
@@ -56,7 +64,10 @@ def write_to_file(UrlList,FileName):
     if x != 0 :
       f.write(x+ "\r")
 
+```
 
+### Function for getting the details
+```
 def get_number_title(CurrentUrl):
   Data = ''
   PhoneNum = 0
@@ -77,7 +88,10 @@ def get_number_title(CurrentUrl):
       print("Something went wrong")
   return Data
 
+```
 
+### The main function
+```
 def main():
   global cpageUrl,allurls
   # ------- reading old urls
@@ -105,8 +119,7 @@ def main():
     value = ad
     m.write(value + "\r")
 
-if __name__ == "__main__":
-  main();
-  
+
   ```
 ## output and result
+The result contains title of the ads and their phone number in a text file.
