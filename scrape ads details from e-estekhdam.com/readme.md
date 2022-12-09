@@ -1,6 +1,8 @@
 # Scraping data from e-estekhdam
 
 ## The code
+
+### Importing libraries
 ```
 from bs4 import BeautifulSoup
 import requests
@@ -8,13 +10,39 @@ from urllib.parse import quote
 import re
 from soupsieve import escape
 
-
+```
+### Specifying the date
+```
 # today date -------
 Today = "2022-12-07"
 # today date -------
 
 
+```
+### The main function
+```
 
+def main():
+  NewUrls = get_urls()
+  FileName = 'newUrl'
+  write_in_file(FileName,NewUrls) # ------- writing urls in a file
+  Details = []
+  for CurrentUrl in NewUrls: 
+    Detail = get_details(CurrentUrl) # ------- getting details------------
+    Details.append(Detail)
+  FileName = 'newData'
+  write_in_file(FileName,Details)
+
+
+
+
+if __name__ == "__main__":
+  main();
+  
+```  
+
+### Find date Function
+```
 def linkDate(Soup):
   DateTag = Soup.find_all("time")[0]
   AdDate = 0
@@ -81,24 +109,5 @@ def get_details(CurrentUrl):
     if AdDate == Today:
       Detail = str(title) + ',' + str(PhoneNum)
   return Detail
+```
 
-
-def main():
-  NewUrls = get_urls()
-  FileName = 'newUrl'
-  write_in_file(FileName,NewUrls) # ------- writing urls in a file
-  Details = []
-  for CurrentUrl in NewUrls: 
-    Detail = get_details(CurrentUrl) # ------- getting details------------
-    Details.append(Detail)
-  FileName = 'newData'
-  write_in_file(FileName,Details)
-
-
-
-
-if __name__ == "__main__":
-  main();
-  
-  
-  ```
