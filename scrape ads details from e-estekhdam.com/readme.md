@@ -49,6 +49,11 @@ def linkDate(Soup):
   DateTag1 = DateTag['datetime'].split('T')
   AdDate = DateTag1[0]
   return AdDate
+  
+```
+
+### Fund number function
+```
 
 def find_number(Soup):
   phoneNum = 0
