@@ -65,7 +65,10 @@ def find_number(Soup):
       if NumsSplit.startswith('09') or NumsSplit.startswith('+989'):
         phoneNum = NumsSplit
   return phoneNum
+```
 
+### The function for getting urls
+```
 def get_urls():
   AllUrls=[]
   u = open ("BaseUrls.txt", "r")
@@ -90,14 +93,20 @@ def get_urls():
       if Repeat == 0:
         AllUrls.append(url)
   return AllUrls
+```
 
+### The function for writing in files
+```
 def write_in_file(FileName,NewUrls):
   string = str(FileName) + '.txt'
   f=open(string,"w+", encoding="utf-8")
   for x in NewUrls:
     if x != 0:
       f.write(x+ "\r")
+```
 
+### The function for getting details
+```
 def get_details(CurrentUrl):
   Detail = []
   try:
