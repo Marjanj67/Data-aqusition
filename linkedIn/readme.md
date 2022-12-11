@@ -1,4 +1,5 @@
 # scraping linkedIn data (job posts) using python
+This project finds ads for a certain keyword in a certain location (toronto) and then scarpes and gathers details about that job ad. 
 ## The code
 
 
