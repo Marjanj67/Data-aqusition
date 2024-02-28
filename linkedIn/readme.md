@@ -7,7 +7,6 @@ This project finds ads for a certain keyword in a certain location (toronto) and
 ```
 from bs4 import BeautifulSoup
 import requests
-import re
 ```
 
 
@@ -15,132 +14,81 @@ import re
 
 ```
 def main():
-    Data = []
-    BaseUrls = get_base_urls()
-    JobUrls = get_urls(BaseUrls)
-    iter = 0
-    header = 'url'+ '-,' + 'title' +'-,' + 'company' +'-,' + 'location'+'-,' + 'Number of applicants' +'-,' + 'workplace type' +'-,' + 'posted date' +'-,' + 'seniority' +'-,' + 'benefits' + '-,' + 'description'
-    Data.append(header)
-    for j in JobUrls:
+    global  details , description, benefits
+    GetUrls()
+    # print(jobUrls)
+    d = open('allData.txt','w', encoding="utf-8")
+    headers = 'url'+ '-,' + 'title' +'-,' + 'company' +'-,' + 'location'+'-,' + 'Number of applicants' +'-,' + 'workplace type' +'-,' + 'posted date' +'-,' + 'seniority' +'-,' + 'benefits' + '-,' + 'description'
+    d.write(headers +"\r")
+    for j in jobUrls:
         webUrl = requests.get(j).text
-        Soup = BeautifulSoup(webUrl,'html.parser')
-        # s=open('html.html','w')
-        # s.write(str(Soup.prettify("utf-8")))
-        title = find_title(Soup)
-        company = find_company(Soup)
-        details = get_details(Soup)
-        description = get_description(Soup)
-        
-        j = j.split('?')[0]
-        CurrentData = str(j)+ '-,' + str(title) +'-,' + str(company) +'-,' + str(details['location'])+'-,' + str(details['Number of applicants']) +'-,' + str(details['workplace type']) +'-,' + str(details['posted date']) +'-,' + str(details['seniority']) +'-,' + str(details['benefits']) + str(description)
-        Data.append(CurrentData)
-    write_to_file(Data)
+        soup = BeautifulSoup(webUrl,'html.parser')
+        s=open('html.html','w')
+        s.write(str(soup.prettify("utf-8")))
+        try: 
+            title = soup.find('h1').text
+            #  ------
+            company = []
+            company = soup.find(href=FindCompany)
+            company = str(company).split('/company/')[1]
+            company = company.split("?")[0]
+            # -----
+            allspans = soup.find_all(['span','figcaption'])
+            details = []
+            details = AnalyseSpans(allspans)
+            j = j.split('?')[0]
+            
+            #  ---------benefit
+            benefits = []
+            # uls = soup.find_all('ul')
+            # benefits = FindBenefits(uls)
+            # benefits = str(benefits).removeprefix('<ul><li>').removesuffix('</li></ul>').replace('</li><li>','- ')
+            data = str(j)+ '-,' + str(title) +'-,' + str(company) +'-,' + str(details['location'])+'-,' + str(details['Number of applicants']) +'-,' + str(details['workplace type']) +'-,' + str(details['posted date']) +'-,' + str(details['seniority']) +'-,' + str(benefits)
 
+
+            # -------
+            description=[]
+            # alldivs = soup.find_all('div')
+            # description = AnalyseDivs(alldivs)
+            data += '-,' + str(description)
+
+            d.write(data + "\r")
+        except:
+            print('error')
 
 ```
 
 
 ### Functions for finding the urls
 ```
-def get_base_urls():
+def GetUrls():
     city = 'toronto'
     cityGeo = {'toronto':'100025096','markham':'102280801'}
     geoId = cityGeo[city]
     q = open('queries.txt','r')
-    BaseUrls = []
+    global jobUrls
     for i in q:
-        Url1 = "https://www.linkedin.com/jobs/search/?currentJobId=3340121435&geoId=" + str(geoId) +"&keywords=" + str(i)
-        Url2 ="https://www.linkedin.com/jobs/search/?currentJobId=3340121435&geoId=" + str(geoId) +"&keywords=" + str(i) + "&start=25"
-        BaseUrls.append(Url1)
-        BaseUrls.append(Url2)
-
-    return BaseUrls
-
-def get_urls(BaseUrls):
-    JobUrls= []
-    for bu in BaseUrls:    
-        webUrl = requests.get(bu).text
+        url = "https://www.linkedin.com/jobs/search/?currentJobId=3340121435&geoId=" + str(geoId) +"&keywords=" + str(i)
+        url = url.removesuffix('\n')
+        webUrl = requests.get(url).text
         soup = BeautifulSoup(webUrl,'html.parser')
-        Links = soup.find_all('a', {'href': re.compile(r'https:\/\/ca\.linkedin\.com\/jobs\/view\/.+')})
-        for li in Links:
-            Splitlink = str(li).split('"')
-            UrlTemp = [x for x in Splitlink if x.startswith('https')][0]
-            JobUrls.append(UrlTemp)
-    return JobUrls
-```
-### Functions for finding the details (title, compant, location , ... )
-```
-def find_title(Soup):
-    title = Soup.find('h1').text
-    return title
+        soup.find_all(href=Mylinks)
+        url2 ="https://www.linkedin.com/jobs/search/?currentJobId=3340121435&geoId=" + str(geoId) +"&keywords=" + str(i) + "&start=25"
+        url2 = url2.removesuffix('\n')
+        webUrl = requests.get(url2).text
+        soup = BeautifulSoup(webUrl,'html.parser')
+        soup.find_all(href=Mylinks)
 
 
-def find_company(Soup):
-    Company = []
-    Links = Soup.find_all('a')
-    for li in Links:
-        if Company == []:
-            SplitLinks = str(li).split('"')
-            Company = [x for x in SplitLinks if x.startswith('https://ca.linkedin.com/company/')]
-    if Company != []:
-        Company = str(Company).split('/company/')[1]
-        Company = Company.split("?")[0]
-    return Company
+def Mylinks(href):
+    global jobUrls
+    s = str(href).startswith('https://ca.linkedin.com/jobs/view/')
+    if href !=None:
+        href = href.split("?")[0]
+        with open('processedUrl.txt', 'r') as f:
+            urls_in_file = f.read().splitlines()
+            if s==1 and href not in urls_in_file:
+                jobUrls.append(href)
 
 
-
-def get_description(Soup):
-    alldivs = Soup.find_all('div')
-    description = []
-    sep = '<div class="show-more-less-html__markup show-more-less-html__markup--clamp-after-5">'
-    sep1 = 'Seniority level'
-    sep3 = '\n \n<button aria-expanded="false"'
-    tags = ['\n','<em>','</em>','</strong>','<p>','<br/>','</p>','<strong>','<u>','</u>','<li>','</li>','<ul>','</ul>','<div>','</div>','</section>','<section>','</button>']
-    for k in alldivs:
-        if 'description__text' in str(k):
-            tempDes = str(k).split(sep, 1)[1]
-            tempDes = tempDes.split(sep1,1)[0]
-            for t in tags:
-                tempDes = tempDes.replace(t,' ')
-            tempDes = tempDes.split(sep3,1)[0]
-    description = tempDes
-    return description
-
-def get_details(Soup):
-    AllSpans = Soup.find_all('span')
-    Location= []
-    NumApp = []
-    Wtype = []
-    postedTime = []
-    seniority = []
-    for k in AllSpans:
-        # print(k)
-        if "topcard__flavor topcard__flavor--bullet" in str(k):
-            Location = k.text.split('\n')[1].strip(' ')
-        if "applicants" in str(k):
-            if k.text != [] and k.text != '' :
-                NumApp = k.text.split('\n')[1].strip(' ')
-        if "workplace-type" in str(k):
-            Wtype= k.text.split('\n')[1].strip(' ')
-        if 'posted-time' in str(k):
-            postedTime= k.text.split('>')[0].strip(' \n')
-        if 'description__job' in str(k) and seniority==[]:
-            seniority = k.text.split('\n')[1].strip(' ')
-    
-    uls = Soup.find_all('ul')
-    benefits = []
-    for u in uls:
-        if 'benefit' in str(u):
-            benefits = u
-    benefits = str(benefits).removeprefix('<ul><li>').removesuffix('</li></ul>').replace('</li><li>','- ')
-    details={'location':Location,'Number of applicants': NumApp,'workplace type':Wtype,'posted date':postedTime,'seniority':seniority,'benefits':benefits}
-    return details
-```
-### Function for writing to file 
-```
-def write_to_file(Data):
-    w = open('allData.txt','w', encoding="utf-8")
-    for d in Data:
-        w.write(d +"\r")
-        
 ```
